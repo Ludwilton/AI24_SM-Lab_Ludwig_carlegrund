@@ -5,12 +5,9 @@ class LinearRegression:
     def __init__(self, X, Y):
         self.Y = Y
         self.X = np.column_stack([np.ones(Y.shape[0]), X])
-        self.n = Y.shape[0]
-        self.b = self.fit()
         self.k = len(self.b) - 1
-        self.SSE = self.calc_SSE()
-        self.var = self.calculate_variance()
-        self.S = np.sqrt(self.var)
+
+
     
     # implementera: 
     # property d that contains the number of features/parameters/dimensions of the model.
@@ -18,37 +15,49 @@ class LinearRegression:
     # property confidence_level that stores the selected confidence level.
 
 
-     # inte en bra idé(?)
-    def fit(self): # ols, returns coeffs as an array
+    @property
+    def SSE(self): # sum of squared errors, total deviation, predicted from actual, returns SSE
+        return np.sum(np.square(self.Y-(self.X@self.b )))
+    
+
+    @property
+    def var(self):
+        return self.SSE/(self.n-self.k-1)
+
+
+    @property
+    def S(self): # standard deviation
+        return np.sqrt(self.var)
+
+    @property
+    def b(self): # ols, returns coeffs as an array, aka fit, regression etc
         return np.linalg.pinv(self.X.T @ self.X) @ self.X.T @ self.Y  
     
-    def calc_SSE(self): # sum of squared errors, total deviation, predicted from actual, returns SSE
-        return np.sum(np.square(self.Y-(self.X@self.b )))
-
-    def calculate_variance(self):
-        var = self.SSE/(self.n-self.k-1)
-        return var
+    @property
+    def n(self):
+        return self.Y.shape[0]
 
 
-    def calculate_standard_deviation(self):
-        sd = np.sqrt(self.var)
-        return sd
+    @property
+    def Syy(self):
+        return (self.n*np.sum(np.square(self.Y)) - np.square(np.sum(self.Y))) / self.n
+
+
+    @property
+    def SSR(self):
+        return self.Syy - self.SSE
 
 
     def regression_significance(self):
-        Syy = (self.n*np.sum(np.square(self.Y)) - np.square(np.sum(self.Y))) / self.n
-        SSR = Syy - self.SSE
-        sig_statistic = (SSR/self.k) / self.S
+        # Calculate the significance of the regression (f statistic and p value)
+        sig_statistic = (self.SSR/self.k) / self.S
         p_significance = stats.f.sf(sig_statistic,self.k , self.n - self.k - 1)
         return p_significance
-
-        # Calculate the significance of the regression (f statistic and p value)
 
 
     def regression_relevance(self):# r^2, "proportion of the variance in the dependent variable that is predictable from the independent variable(s)"
         Syy = np.sum(np.square((self.Y - np.mean(self.Y))))
-        SSR = Syy - self.SSE # make class variable
-        Rsq = SSR / Syy
+        Rsq = self.SSR / Syy
         return Rsq
 
     
